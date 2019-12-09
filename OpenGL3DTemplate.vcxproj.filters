@@ -21,10 +21,10 @@
     <ClCompile Include="Model_3DS.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenGLMeshLoader19.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="glew.h">

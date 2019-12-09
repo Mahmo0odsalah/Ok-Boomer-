@@ -5,7 +5,7 @@
 #include <math.h>
 #include <vector>
 #include <sstream>
-
+#include <windows.h>
 int level = 1; //to be changed to 1
 int maxScore = 20;
 int lastX = 14;
@@ -20,7 +20,7 @@ float curposx = 8;
 float curposy = 0;
 float speedfac = 1; // to be changed to 1 
 GLuint tex;
-char title[] = "3D Model Loader Sample";
+char title[] = "Ok Boomer!";
 bool fps;
 int score;
 float houseZ = 90;
@@ -114,26 +114,28 @@ void InitLightSource()
 {
 	// Enable Lighting for this OpenGL Program
 	glEnable(GL_LIGHTING);
-
 	// Enable Light Source number 0
 	// OpengL has 8 light sources
 	glEnable(GL_LIGHT0);
-
+	glEnable(GL_LIGHT1);
 	// Define Light source 0 ambient light
 	GLfloat ambient[] = { 0.1f, 0.1f, 0.1, 1.0f };
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-
+	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
 	// Define Light source 0 diffuse light
 	GLfloat diffuse[] = { 0.5f, 0.5f, 0.5f, 1.0f };
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
 	// Define Light source 0 Specular light
-	GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	GLfloat specular[] = { 0.0f, 1.0f, 0.0f, 1.0f };
 	glLightfv(GL_LIGHT0, GL_SPECULAR, specular);
-
+	glLightfv(GL_LIGHT1, GL_SPECULAR, specular);
 	// Finally, define light source 0 position in World Space
-	GLfloat light_position[] = { 0.0f, 10.0f, 0.0f, 1.0f };
+	GLfloat light_position[] = { 0.0f, 0.0f, 50.0f, 1.0f };
 	glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+	GLfloat light_position2[] = { 10.0f, 10.0f, 0.0f, 1.0f };
+
+	glLightfv(GL_LIGHT1, GL_POSITION, light_position2);
 }
 
 //=======================================================================
@@ -274,7 +276,7 @@ void renderHouse() {
 	model_house.Draw();
 	glPopMatrix();
 	if(!win &&!lose)
-	houseZ -= 0.1;
+	houseZ -= 0.3;
 	if (houseZ <= 5.2) {
 		win = true;
 	}
@@ -308,7 +310,9 @@ void myDisplay(void)
 	glMatrixMode(GL_MODELVIEW);
 
 	glLoadIdentity();
-
+	//light
+	GLfloat light_position[] = { 0.0, 10.0f, 0.0f, 1.0f };
+	glLightfv(GL_LIGHT1, GL_POSITION, light_position);
 	if (level == 1) {
 		if (fps) {
 			gluLookAt(curposx, Eyef.y, Eyef.z, AtF.x, AtF.y, AtF.z, Up.x, Up.y, Up.z);
@@ -355,7 +359,7 @@ void myDisplay(void)
 		else {
 			glPushMatrix();
 			std::ostringstream oss;
-			oss << "You LOST!, press R to retry";
+			oss << "You LOST! press R to retry";
 			std::string var = oss.str();
 			if (fps)
 				output(curposx, AtF.y, 60, 1, 0, 0, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
@@ -452,7 +456,7 @@ void myDisplay(void)
 			}
 			glPushMatrix();
 			std::ostringstream oss;
-			oss << "Ok, Boomer! You WON!";
+			oss << "Ok, Boomer! You WON! Your Score is: " << maxScore*2;
 			std::string var = oss.str();
 			if (fps)
 				output(AtF.x, curposy + 6, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
@@ -463,12 +467,12 @@ void myDisplay(void)
 		else {
 			glPushMatrix();
 			std::ostringstream oss;
-			oss << "You LOST!, press R to retry";
+			oss << "You LOST! press R to retry";
 			std::string var = oss.str();
 			if (fps)
-				output(AtF.x, curposy+6, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+				output(AtF.x, curposy+6, 60, 1, 0, 0, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
 			else
-				output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());			glPopMatrix();
+				output(10, 10, -10, 1, 0, 0, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());			glPopMatrix();
 		}
 
 
@@ -577,7 +581,7 @@ void objectsMove(void) {
 				score += 1;
 				objects.erase(objects.begin() + i);
 				objectsType.erase(objectsType.begin() + i);
-				if (score <= maxScore - 3) {
+				if (score <= maxScore ) {
 					Vector v(8, 5, 105);
 					v.x = newObjPos();
 					objects.push_back(v);
@@ -624,7 +628,7 @@ void objectsMove(void) {
 				score += 1;
 				objects.erase(objects.begin() + i);
 				objectsType.erase(objectsType.begin() + i);
-				if (score <= maxScore - 3) {
+				if (score <= maxScore) {
 					Vector v(11, 10, 105);
 					v.y = newObjPos();
 					objects.push_back(v);
@@ -636,7 +640,7 @@ void objectsMove(void) {
 
 			else {
 				obj.z -= 0.1 * speedfac;
-				speedfac += speedfac > 1 ? 0 : 0.001; // to be changed to > 10
+				speedfac += speedfac > 10 ? 0 : 0.001; // to be changed to > 10
 				objects[i] = obj;
 				if (objectsType[i]) {
 
@@ -840,6 +844,7 @@ void LoadAssets()
 //=======================================================================
 void main(int argc, char** argv)
 {
+	PlaySound(TEXT("ok.wav"), NULL, SND_LOOP | SND_ASYNC);
 	initObjects();
 	glutInit(&argc, argv);
 
