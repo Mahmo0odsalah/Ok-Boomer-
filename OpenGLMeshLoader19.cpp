@@ -6,7 +6,7 @@
 #include <vector>
 #include <sstream>
 
-int level = 2; //to be changed to 1
+int level = 1; //to be changed to 1
 int maxScore = 20;
 int lastX = 14;
 int lastY = 3;
@@ -18,13 +18,13 @@ float posx = 8;
 float posy = 0;
 float curposx = 8;
 float curposy = 0;
-float speedfac = 0.1; // to be changed to 1 
+float speedfac = 1; // to be changed to 1 
 GLuint tex;
 char title[] = "3D Model Loader Sample";
 bool fps;
 int score;
 float houseZ = 90;
-bool win, lose;
+bool win, lose, changed;
 // 3D Projection Options
 GLdouble fovy = 45.0;
 GLdouble aspectRatio = (GLdouble)WIDTH / (GLdouble)HEIGHT;
@@ -32,6 +32,7 @@ GLdouble zNear = 0.1;
 GLdouble zFar = 1000;
 void objectsMove(void);
 void initObjects();
+void LoadAssets();
 class Vector
 {
 public:
@@ -49,6 +50,7 @@ public:
 		z += value;
 	}
 };
+GLTexture tex_road;
 
 Vector Eyet(12, 10, -20);
 Vector Eyef(12, 6, 1);
@@ -61,6 +63,7 @@ std::vector<bool> objectsType; //true = phone
 void reset(bool resetLevel = false) {
 	if (resetLevel) {
 		level = 1;
+		tex_road.Load("Textures/road.bmp");
 	}
 	if (level == 1) {
 		int lastX = 14;
@@ -102,7 +105,6 @@ Model_3DS model_laptop;
 Model_3DS model_house;
 
 // Textures
-GLTexture tex_road;
 GLTexture tex_ground;
 
 //=======================================================================
@@ -291,6 +293,13 @@ void output(int x, int y,int z, float r, float g, float b, void* font, char *str
 
 void changeLevel(int lvlNo) {
 	level = lvlNo;
+	//LoadAssets();
+	if (lvlNo == 2) {
+		tex_road.Load("Textures/blocks.bmp");
+	}
+	else {
+		tex_road.Load("Textures/road.bmp");
+	}
 	reset();
 }
 void myDisplay(void)
@@ -329,6 +338,10 @@ void myDisplay(void)
 			}
 		}
 		else if (win) {
+			if (fps == true) {
+				fps = false;
+				changed = true;
+			}
 			glPushMatrix();
 			std::ostringstream oss;
 			oss << "Ok, Boomer! You WON! Press L to go to level 2";
@@ -345,9 +358,9 @@ void myDisplay(void)
 			oss << "You LOST!, press R to retry";
 			std::string var = oss.str();
 			if (fps)
-				output(curposx, AtF.y, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+				output(curposx, AtF.y, 60, 1, 0, 0, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
 			else
-				output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+				output(10, 10, -10, 1, 0, 0, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
 			glPopMatrix();
 		}
 
@@ -433,6 +446,10 @@ void myDisplay(void)
 			}
 		}
 		else if (win) {
+			if (fps == true) {
+				fps = false;
+				changed = true;
+			}
 			glPushMatrix();
 			std::ostringstream oss;
 			oss << "Ok, Boomer! You WON!";
@@ -572,7 +589,7 @@ void objectsMove(void) {
 
 			else {
 				obj.z -= 0.1 * speedfac;
-				speedfac += speedfac > 1 ? 0 : 0.001; // to be changed to > 10
+				speedfac += speedfac > 10 ? 0 : 0.001; // to be changed to > 10
 				objects[i] = obj;
 				if (objectsType[i]) {
 
@@ -603,6 +620,7 @@ void objectsMove(void) {
 				lose = true;
 			}
 			if (obj.z <= -10) {//here here
+				speedfac += speedfac > 10 ? 0 : 0.1;
 				score += 1;
 				objects.erase(objects.begin() + i);
 				objectsType.erase(objectsType.begin() + i);
@@ -709,9 +727,11 @@ void myKeyboard(unsigned char button, int x, int y)
 		break;
 	case 'v':
 		fps = !fps;
+		changed = fps;
 		break;
 	case 'l':
 		if (win)
+			fps = changed;
 			changeLevel(2);
 		break;
 	case 27:
@@ -807,7 +827,9 @@ void LoadAssets()
 	model_laptop.Load("models/laptop/laptop.3DS");
 	model_house.Load("models/house/house.3DS");
 	// Loading texture files
+	
 	tex_road.Load("Textures/road.bmp");
+	
 	tex_ground.Load("Textures/ground.bmp");
 
 	loadBMP(&tex, "Textures/blu-sky-3.bmp", true);
