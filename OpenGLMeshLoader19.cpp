@@ -6,14 +6,19 @@
 #include <vector>
 #include <sstream>
 
-int maxScore = 2;
+int level = 2; //to be changed to 1
+int maxScore = 20;
+int lastX = 14;
+int lastY = 3;
 int WIDTH = 1280;
 int HEIGHT = 720;
 float rotAng;
 int rotAngSky;
 float posx = 8;
+float posy = 0;
 float curposx = 8;
-float speedfac = 1;
+float curposy = 0;
+float speedfac = 0.1; // to be changed to 1 
 GLuint tex;
 char title[] = "3D Model Loader Sample";
 bool fps;
@@ -53,17 +58,38 @@ Vector Up(0, 1, 0);
 std::vector<Vector> objects;
 std::vector<bool> objectsType; //true = phone
 
-void reset() {
-	posx = 8;
-	curposx = 8;
-	speedfac = 1;
-	score = 0;
-	houseZ = 90;
-	win = false;
-	lose = false;
-	objects.clear();
-	objectsType.clear();
-	initObjects();
+void reset(bool resetLevel = false) {
+	if (resetLevel) {
+		level = 1;
+	}
+	if (level == 1) {
+		int lastX = 14;
+		int lastY = 3;
+		posx = 8;
+		curposx = 8;
+		speedfac = 1;
+		score = 0;
+		houseZ = 90;
+		win = false;
+		lose = false;
+		objects.clear();
+		objectsType.clear();
+		initObjects();
+	}
+	else if (level == 2) {
+		int lastX = 14;
+		int lastY = 3;
+		posy = 0;
+		curposy = 0;
+		speedfac = 1;
+		score = 0;
+		houseZ = 90;
+		win = false;
+		lose = false;
+		objects.clear();
+		objectsType.clear();
+		initObjects();
+	}
 }
 
 
@@ -262,162 +288,356 @@ void output(int x, int y,int z, float r, float g, float b, void* font, char *str
 		
 	}
 }
+
+void changeLevel(int lvlNo) {
+	level = lvlNo;
+	reset();
+}
 void myDisplay(void)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glMatrixMode(GL_MODELVIEW);
 
 	glLoadIdentity();
-	if (fps) {
-		gluLookAt(curposx, Eyef.y, Eyef.z, AtF.x, AtF.y, AtF.z, Up.x, Up.y, Up.z);
-	}
-	else {
-		gluLookAt(Eyet.x, Eyet.y, Eyet.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
-	}
-	if (!win && !lose) {
-		objectsMove();
-		if (rotAng >=15 || rotAng <= -15) {
-			rotinc *= -1;
-		}
-		rotAng += rotinc*speedfac*0.5;
-		if (posx >= curposx) {
-			if (posx - curposx < 0.1*speedfac) {
-				curposx = posx;
-			}
-			else
-				curposx += 0.1 *speedfac;
+
+	if (level == 1) {
+		if (fps) {
+			gluLookAt(curposx, Eyef.y, Eyef.z, AtF.x, AtF.y, AtF.z, Up.x, Up.y, Up.z);
 		}
 		else {
-			if (curposx -posx< 0.1* speedfac) {
-				curposx = posx;
+			gluLookAt(Eyet.x, Eyet.y, Eyet.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
+		}
+		if (!win && !lose) {
+			objectsMove();
+			if (rotAng >= 15 || rotAng <= -15) {
+				rotinc *= -1;
 			}
+			rotAng += rotinc * speedfac * 0.5;
+			if (posx >= curposx) {
+				if (posx - curposx < 0.1 * speedfac) {
+					curposx = posx;
+				}
+				else
+					curposx += 0.1 * speedfac;
+			}
+			else {
+				if (curposx - posx < 0.1 * speedfac) {
+					curposx = posx;
+				}
+				else
+					curposx -= 0.1 * speedfac;
+			}
+		}
+		else if (win) {
+			glPushMatrix();
+			std::ostringstream oss;
+			oss << "Ok, Boomer! You WON! Press L to go to level 2";
+			std::string var = oss.str();
+			if (fps)
+				output(curposx, AtF.y, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
 			else
-			curposx -= 0.1 * speedfac;
+				output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+			glPopMatrix();
 		}
-	}
-	else if(win) {
-		glPushMatrix();
-		std::ostringstream oss;
-		oss << "Ok, Boomer! You WON!";
-		std::string var = oss.str();
-		output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
-		glPopMatrix();
-	}
-	else {
-		glPushMatrix();
-		std::ostringstream oss;
-		oss << "You LOST!, press R to retry";
-		std::string var = oss.str();
-		output(10, 10, -10, 1, 0, 0, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
-		glPopMatrix();
-	}
-	
-
-	if (score >= maxScore) {
-		renderHouse();
-	}
-	rotAngSky += 1;
-
-	GLfloat lightIntensity[] = { 0.7, 0.7, 0.7, 1.0f };
-	GLfloat lightPosition[] = { 0.0f, 100.0f, 0.0f, 0.0f };
-	glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
-	glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
-
-	// Draw Ground
-	RenderRoad();
-	RenderGround();
-	// Draw Man Model
-	glPushMatrix();
-	glTranslatef(curposx, 0, 0);
-	glScalef(0.07, 0.07, 0.07); 
-	if (!win && !lose) {
-		model_man.Objects[3].rot.y = rotAng;
-		model_man.Objects[2].rot.y = rotAng;
-		model_man.Objects[3].pos.y += rotinc / 10.0;
-		model_man.Objects[2].pos.y += rotinc / 10.0;
-		model_man.Objects[0].pos.y += rotinc / 10.0;
-		model_man.Objects[1].pos.y += rotinc / 10.0;
-		model_man.Objects[0].pos.z = 0.5f;
-		for (int i = 4; i <= 8; i++) {
-			model_man.Objects[i].rot.y = -rotAng;
+		else {
+			glPushMatrix();
+			std::ostringstream oss;
+			oss << "You LOST!, press R to retry";
+			std::string var = oss.str();
+			if (fps)
+				output(curposx, AtF.y, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+			else
+				output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+			glPopMatrix();
 		}
+
+
+		if (score >= maxScore) {
+			renderHouse();
+		}
+		rotAngSky += 1;
+
+		GLfloat lightIntensity[] = { 0.7, 0.7, 0.7, 1.0f };
+		GLfloat lightPosition[] = { 0.0f, 100.0f, 0.0f, 0.0f };
+		glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
+
+		// Draw Ground
+		RenderRoad();
+		RenderGround();
+		// Draw Man Model
+		glPushMatrix();
+		glTranslatef(curposx, 0, 0);
+		glScalef(0.07, 0.07, 0.07);
+		if (!win && !lose) {
+			model_man.Objects[3].rot.y = rotAng;
+			model_man.Objects[2].rot.y = rotAng;
+			model_man.Objects[3].pos.y += rotinc / 10.0;
+			model_man.Objects[2].pos.y += rotinc / 10.0;
+			model_man.Objects[0].pos.y += rotinc / 10.0;
+			model_man.Objects[1].pos.y += rotinc / 10.0;
+			model_man.Objects[0].pos.z = 0.5f;
+			for (int i = 4; i <= 8; i++) {
+				model_man.Objects[i].rot.y = -rotAng;
+			}
+		}
+		model_man.Draw();
+		glPopMatrix();
+
+
+		//sky box
+		glPushMatrix();
+
+		GLUquadricObj* qobj;
+		qobj = gluNewQuadric();
+		glTranslated(50, 0, 0);
+		glRotated(rotAngSky / 50.0, 0, 1, 0);
+		glRotated(90, 1, 1, 0);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		gluQuadricTexture(qobj, true);
+		gluQuadricNormals(qobj, GL_SMOOTH);
+		gluSphere(qobj, 100, 100, 100);
+		gluDeleteQuadric(qobj);
+
+
+		glPopMatrix();
+
+
 	}
-	model_man.Draw();
-	glPopMatrix();
+	else if (level == 2) {
+		if (fps) {
+			gluLookAt(Eyef.x, curposy+3, Eyef.z, AtF.x, curposy+6, AtF.z, Up.x, Up.y, Up.z);
+		}
+		else {
+			gluLookAt(Eyet.x, Eyet.y, Eyet.z, At.x, At.y, At.z, Up.x, Up.y, Up.z);
+		}
+		if (!win && !lose) {
+			objectsMove();
+			if (rotAng >= 15 || rotAng <= -15) {
+				rotinc *= -1;
+			}
+			rotAng += rotinc * speedfac * 0.5;
+			if (posy >= curposy) {
+				if (posy - curposy < 0.1 * speedfac) {
+					curposy = posy;
+				}
+				else
+					curposy += 0.05 * speedfac;
+			}
+			else {
+				if (curposy - posy < 0.1 * speedfac) {
+					curposy = posy;
+				}
+				else
+					curposy -= 0.05 * speedfac;
+			}
+		}
+		else if (win) {
+			glPushMatrix();
+			std::ostringstream oss;
+			oss << "Ok, Boomer! You WON!";
+			std::string var = oss.str();
+			if (fps)
+				output(AtF.x, curposy + 6, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+			else
+				output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());			
+			glPopMatrix();
+		}
+		else {
+			glPushMatrix();
+			std::ostringstream oss;
+			oss << "You LOST!, press R to retry";
+			std::string var = oss.str();
+			if (fps)
+				output(AtF.x, curposy+6, 60, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());
+			else
+				output(10, 10, -10, 1, 1, 1, GLUT_BITMAP_TIMES_ROMAN_24, (char*)var.c_str());			glPopMatrix();
+		}
 
-	
-	//sky box
-	glPushMatrix();
 
-	GLUquadricObj* qobj;
-	qobj = gluNewQuadric();
-	glTranslated(50, 0, 0);
-	glRotated(rotAngSky/50.0, 0, 1, 0);
-	glRotated(90, 1, 1, 0);
-	glBindTexture(GL_TEXTURE_2D, tex);
-	gluQuadricTexture(qobj, true);
-	gluQuadricNormals(qobj, GL_SMOOTH);
-	gluSphere(qobj, 100, 100, 100);
-	gluDeleteQuadric(qobj);
+		if (score >= maxScore) {
+			renderHouse();
+		}
+		rotAngSky += 1;
+
+		GLfloat lightIntensity[] = { 0.7, 0.7, 0.7, 1.0f };
+		GLfloat lightPosition[] = { 0.0f, 100.0f, 0.0f, 0.0f };
+		glLightfv(GL_LIGHT0, GL_POSITION, lightPosition);
+		glLightfv(GL_LIGHT0, GL_AMBIENT, lightIntensity);
+
+		// Draw Ground
+		RenderRoad();
+		RenderGround();
+		// Draw Man Model
+		glPushMatrix();
+		glTranslatef(11, curposy, 0);
+		glScalef(0.07, 0.07, 0.07);
+		if (!win && !lose) {
+			model_man.Objects[3].rot.y = rotAng;
+			model_man.Objects[2].rot.y = rotAng;
+			model_man.Objects[3].pos.y += rotinc / 10.0;
+			model_man.Objects[2].pos.y += rotinc / 10.0;
+			model_man.Objects[0].pos.y += rotinc / 10.0;
+			model_man.Objects[1].pos.y += rotinc / 10.0;
+			model_man.Objects[0].pos.z = 0.5f;
+			for (int i = 4; i <= 8; i++) {
+				model_man.Objects[i].rot.y = -rotAng;
+			}
+		}
+		model_man.Draw();
+		glPopMatrix();
 
 
-	glPopMatrix();
+		//sky box
+		glPushMatrix();
+
+		GLUquadricObj* qobj;
+		qobj = gluNewQuadric();
+		glTranslated(50, 0, 0);
+		glRotated(rotAngSky / 50.0, 0, 1, 0);
+		glRotated(90, 1, 1, 0);
+		glBindTexture(GL_TEXTURE_2D, tex);
+		gluQuadricTexture(qobj, true);
+		gluQuadricNormals(qobj, GL_SMOOTH);
+		gluSphere(qobj, 100, 100, 100);
+		gluDeleteQuadric(qobj);
 
 
+		glPopMatrix();
 
+	}
 	glutSwapBuffers();
 }
 bool detectCol(float player, float object) {
-	if ((object == 8 && player <= 11) || (object == 14 && player >= 11)) {
-		return true;
+	if (level == 1) {
+		if ((object == 8 && player <= 11) || (object == 14 && player >= 11)) {
+			return true;
+		}
+		return false;
 	}
-	return false;
+	if (level == 2) {
+		if ((object == 3 && player <= 2.5f) || (object == 10 && player > 2.5f)) {
+			return true;
+		}
+		return false;
+	}
 }
-
-void objectsMove(void) {
-
-	for (int i = 0; i < objects.size(); i++)
-	{
-		Vector obj = objects[i];
-		if (obj.z <= 0 && obj.z >-0.5*speedfac && detectCol(curposx, obj.x)) {
-			lose = true;
+int newObjPos() {
+	int result = 0;
+	if (level == 1) {
+		double r = ((double)rand() / (RAND_MAX));
+		if (lastX == 14) {
+			result = r > 0.2 ? 8 : 14;
+			lastX = result;
 		}
-		if (obj.z <= -10) {
-			score += 1;
-			objects.erase(objects.begin() + i);
-			objectsType.erase(objectsType.begin() + i);
-			if (score <= maxScore) {
-				Vector v(8, 5, 105);
-				double r = ((double)rand() / (RAND_MAX));
-				v.x = r > 0.5 ? 8 : 14;
-				objects.push_back(v);
-				r = ((double)rand() / (RAND_MAX));
-				objectsType.push_back(r > 0.5);
-			}
-
+		else{
+			result = r > 0.8 ? 8 : 14;
+			lastX = result;
 		}
-
+	}
+	else if (level == 2) {
+		double r = ((double)rand() / (RAND_MAX));
+		if (lastY == 10) {
+			result = r > 0.2 ? 3 : 10;
+			lastY = result;
+		}
 		else {
-			obj.z -= 0.1*speedfac;
-			speedfac += speedfac >10 ? 0: 0.001;
-			objects[i] = obj;
-			if (objectsType[i]) {
-
-				// Draw phone Model
-				glPushMatrix();
-				glTranslatef(obj.x, obj.y, obj.z);
-				glScalef(10, 10, 10);
-				glRotatef(90.f, 1, 0, 0);
-				model_phone.Draw();
-				glPopMatrix();
+			result = r > 0.8 ? 3 : 10;
+			lastY = result;
+		}
+	}
+	return result;
+}
+void objectsMove(void) {
+	if (level == 1) {
+		for (int i = 0; i < objects.size(); i++)
+		{
+			Vector obj = objects[i];
+			if (obj.z <= 0 && obj.z > -0.5 * speedfac && detectCol(curposx, obj.x)) {
+				lose = true;
 			}
+			if (obj.z <= -10) {
+				score += 1;
+				objects.erase(objects.begin() + i);
+				objectsType.erase(objectsType.begin() + i);
+				if (score <= maxScore - 3) {
+					Vector v(8, 5, 105);
+					v.x = newObjPos();
+					objects.push_back(v);
+					double r = ((double)rand() / (RAND_MAX));
+					objectsType.push_back(r > 0.5);
+				}
+
+			}
+
 			else {
-				// Draw laptop Model
-				glPushMatrix();
-				glTranslatef(obj.x, obj.y, obj.z);
-				glScalef(0.01, 0.01, -0.01);
-				model_laptop.Draw();
-				glPopMatrix();
+				obj.z -= 0.1 * speedfac;
+				speedfac += speedfac > 1 ? 0 : 0.001; // to be changed to > 10
+				objects[i] = obj;
+				if (objectsType[i]) {
+
+					// Draw phone Model
+					glPushMatrix();
+					glTranslatef(obj.x, obj.y, obj.z);
+					glScalef(10, 10, 10);
+					glRotatef(90.f, 1, 0, 0);
+					model_phone.Draw();
+					glPopMatrix();
+				}
+				else {
+					// Draw laptop Model
+					glPushMatrix();
+					glTranslatef(obj.x, obj.y, obj.z);
+					glScalef(0.01, 0.01, -0.01);
+					model_laptop.Draw();
+					glPopMatrix();
+				}
+			}
+		}
+	}
+	else if (level == 2) {
+		for (int i = 0; i < objects.size(); i++)
+		{
+			Vector obj = objects[i];
+			if (obj.z <= 0 && obj.z > -0.5 * speedfac && detectCol(curposy, obj.y)) {
+				lose = true;
+			}
+			if (obj.z <= -10) {//here here
+				score += 1;
+				objects.erase(objects.begin() + i);
+				objectsType.erase(objectsType.begin() + i);
+				if (score <= maxScore - 3) {
+					Vector v(11, 10, 105);
+					v.y = newObjPos();
+					objects.push_back(v);
+					double r = ((double)rand() / (RAND_MAX));
+					objectsType.push_back(r > 0.5);
+				}
+
+			}
+
+			else {
+				obj.z -= 0.1 * speedfac;
+				speedfac += speedfac > 1 ? 0 : 0.001; // to be changed to > 10
+				objects[i] = obj;
+				if (objectsType[i]) {
+
+					// Draw phone Model
+					glPushMatrix();
+					glTranslatef(obj.x, obj.y, obj.z);
+					glScalef(10, 10, 10);
+					glRotatef(90.f, 1, 0, 0);
+					model_phone.Draw();
+					glPopMatrix();
+				}
+				else {
+					// Draw laptop Model
+					glPushMatrix();
+					glTranslatef(obj.x, obj.y, obj.z);
+					glScalef(0.01, 0.01, -0.01);
+					model_laptop.Draw();
+					glPopMatrix();
+				}
 			}
 		}
 	}
@@ -425,21 +645,34 @@ void objectsMove(void) {
 }
 
 void initObjects() {
-	Vector v4(8, 5, 85);
-	objects.push_back(v4);
-	objectsType.push_back(false);
-	Vector v3(8, 5, 105);
-	objects.push_back(v3);
-	objectsType.push_back(false);
-	Vector v(8, 5, 65);
-	objects.push_back(v);
-	objectsType.push_back(true);
-	Vector v1(14, 5, 45);
-	objects.push_back(v1);
-	objectsType.push_back(true);
-	Vector v2(8, 5, 25);
-	objects.push_back(v2);
-	objectsType.push_back(false);
+	if (level == 1) {
+		Vector v4(8, 5, 85);
+		objects.push_back(v4);
+		objectsType.push_back(false);
+		Vector v3(14, 5, 105);
+		objects.push_back(v3);
+		objectsType.push_back(false);
+		Vector v(8, 5, 65);
+		objects.push_back(v);
+		objectsType.push_back(true);
+		Vector v1(14, 5, 45);
+		objects.push_back(v1);
+		objectsType.push_back(true);
+		Vector v2(8, 5, 25);
+		objects.push_back(v2);
+		objectsType.push_back(false);
+	}
+	else if (level == 2) {
+		Vector v3(11, 3, 105);
+		objects.push_back(v3);
+		objectsType.push_back(false);
+		Vector v(11, 10, 65);
+		objects.push_back(v);
+		objectsType.push_back(true);
+		Vector v2(11, 3, 25);
+		objects.push_back(v2);
+		objectsType.push_back(false);
+	}
 
 }
 //=======================================================================
@@ -459,16 +692,33 @@ void myKeyboard(unsigned char button, int x, int y)
 		reset();
 		break;
 	case 'd':
-		posx = 8;
+		if(level ==1)
+			posx = 8;
 		break;
 	case 'a':
-		posx = 15;
+		if (level == 1)
+			posx = 15;
+		break;
+	case 'w':
+		if (level == 2)
+			posy = 5;
+		break;
+	case 's':
+		if (level == 2)
+			posy = 0;
 		break;
 	case 'v':
 		fps = !fps;
 		break;
+	case 'l':
+		if (win)
+			changeLevel(2);
+		break;
 	case 27:
-		exit(0);
+		if (level == 1)
+			exit(0);
+		else
+			reset(true);
 		break;
 	default:
 		break;
